@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chess</title>
+    <link rel="stylesheet" href="/static/css/chessground.css">
+    <style>
+        #board {
+            width: 600px;
+            height: 600px;
+            margin: 50px auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="board"></div>
+    <script src="/static/js/chessground.min.js"></script>
+    <script>
+        // Your configuration code here
+        const config = {
+            movable: {
+                free: false,
+                color: 'white',
+                dests: new Map()
+            },
+            draggable: {
+                enabled: true
+            }
+        };
+
+        const ground = Chessground(document.getElementById('board'), config);
+
+        function sendMove(orig, dest) {
+            fetch('/make_move', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ move: orig + dest })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.validMoves) {
+                    ground.set({ movable: { dests: new Map(Object.entries(data.validMoves)) } });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

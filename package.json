@@ -1,0 +1,11 @@
+{
+    "name": "chess-engine-ui",
+    "version": "1.0.0",
+    "description": "Chess Engine UI using Chessground",
+    "dependencies": {
+      "chessground": "^8.3.7"
+    },
+    "scripts": {
+      "build": "npm install"
+    }
+  }
