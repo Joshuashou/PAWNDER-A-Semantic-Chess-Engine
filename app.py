@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 import chess
+import uvicorn
 
 app = Flask(__name__)
 
