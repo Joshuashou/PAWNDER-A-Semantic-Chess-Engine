@@ -7,8 +7,10 @@
     "chess.js": "^1.0.0",
     "chessboardjs": "^0.0.1",
     "chessground": "^9.1.1",
+    "express": "^4.21.2",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "stockfish": "^16.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

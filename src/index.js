@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import Chessground from "@react-chess/chessground";
+// import Chessground from "@react-chess/chessground";
 import ChessBoard from "./components/ChessBoard";
 
 

@@ -1,91 +1,107 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Chessground } from 'chessground';
-import { Chess } from 'chess.js';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Chessground } from "chessground";
+import { Chess } from "chess.js";
+import useStockfishEngine from "./useStockfishEngine";
 import "../../node_modules/chessground/assets/chessground.base.css";
 import "../../node_modules/chessground/assets/chessground.brown.css";
 import "../../node_modules/chessground/assets/chessground.cburnett.css";
 
-
 const ChessBoard = () => {
   const boardRef = useRef(null);
   const chess = useRef(new Chess());
-  const [turn, setTurn] = useState('white'); // Track whose turn it is
-  const [worker, setWorker] = useState(null); // Stockfish worker for engine analysis. 
+  const groundRef = useRef(null);
+  const [topMoves, setTopMoves] = useState([]);
+  const [fen, setFen] = useState(chess.current.fen());
+  const turn = chess.current.turn() === 'w' ? 'white' : 'black';
+  console.log("Hi")
+
+  const handleEvaluation = useCallback((data) => {
+    console.log("handleEvaluation called");
+    setTopMoves(parseStockfishOutput(data));
+  }, []);
+
+  const { sendCommand } = useStockfishEngine({ onEvaluation: handleEvaluation });
+
+  const getDests = useCallback(() => {
+    const dests = new Map();
+    chess.current.moves({ verbose: true }).forEach(move => {
+      dests.set(move.from, (dests.get(move.from) || []).concat(move.to));
+    });
+    return dests;
+  }, [fen]);
+
+  const handleMove = useCallback((orig, dest) => {
+    try {
+      const move = chess.current.move({ from: orig, to: dest, promotion: "q" });
+      if (!move) return "snapback";
+      
+      const newFen = chess.current.fen();
+      setFen(newFen);
+      
+      if (sendCommand) {
+        console.log("stockfish sending move command");
+        sendCommand(`position fen ${newFen}`);
+        sendCommand("go depth 15");
+      }
+    } catch (error) {
+      console.error("Move error:", error);
+    }
+  }, [sendCommand]);
 
   useEffect(() => {
-    const config = {
-      fen: chess.current.fen(),
-      orientation: 'white',
-      turnColor: turn, // Highlight the current player's turn
+    groundRef.current = Chessground(boardRef.current, {
+      fen,
+      turnColor: turn,
       movable: {
-        color: turn, // Only allow the current player to move
+        color: turn,
         free: false,
         dests: getDests(),
-        events: {
-          after: (orig, dest) => {
-            console.log('Move attempted:', { from: orig, to: dest });
-
-            // Attempt to make the move
-            const move = chess.current.move({ from: orig, to: dest, promotion: 'q' });
-
-            // If the move is illegal, revert it
-            if (move === null) {
-              console.log('Invalid move');
-              return 'snapback';
-            }
-
-            console.log('Move result:', move);
-
-            // Update the board position
-            ground.set({ fen: chess.current.fen() });
-
-            // Switch turns
-            setTurn(chess.current.turn() === 'w' ? 'white' : 'black');
-
-            // Check for game over conditions
-            if (chess.current.isGameOver()) {
-              if (chess.current.isCheckmate()) {
-                alert(`Checkmate! ${chess.current.turn() === 'w' ? 'Black' : 'White'} wins!`);
-              } else if (chess.current.isStalemate()) {
-                alert('Stalemate! The game is a draw.');
-              } else if (chess.current.isThreefoldRepetition()) {
-                alert('Draw by threefold repetition.');
-              } else if (chess.current.isInsufficientMaterial()) {
-                alert('Draw due to insufficient material.');
-              }
-            }
-          }
-        }
+        events: { after: handleMove }
       },
-      highlight: {
-        lastMove: true, // Highlight the last move
-        check: true // Highlight the king in check
-      }
-    };
+      highlight: { lastMove: true, check: true }
+    });
 
-    const stockfish = new Worker('/workers/stockfishWorker.js');
-    setWorker(stockfish);
+    return () => groundRef.current?.destroy();
+  }, []);
 
-    stockfish.postMessage({type: 'start' });
+  useEffect(() => {
+    groundRef.current?.set({
+      fen,
+      turnColor: turn,
+      movable: { color: turn, dests: getDests() }
+    });
+  }, [fen, turn, getDests]);
 
-
-    function getDests() {
-        const dests = new Map(); 
-        chess.current.moves({ verbose:true }).forEach(move => {
-            if (!dests.has(move.from)) dests.set(move.from, []);
-            dests.get(move.from).push(move.to);
-        })
-        return dests;
+  const parseStockfishOutput = (output) => {
+    if (Array.isArray(output)) {
+      // If the output is already an array, return it directly
+      return output.slice(0, 5);
     }
+  
+    if (typeof output !== "string") {
+      console.error("Invalid output:", output);
+      return [];
+    }
+  
+    // Parse the string output
+    const matches = [];
+    const regex = /pv\s+(\w+)/g;
+    let match;
+    while ((match = regex.exec(output)) !== null) {
+      matches.push(match[1]);
+    }
+    return matches.slice(0, 5);
+  };
 
-    const ground = Chessground(boardRef.current, config);
-
-    return () => {
-      ground.destroy();
-    };
-  }, [turn]); // Re-run effect when the turn changes
-
-  return <div ref={boardRef} style={{ width: '400px', height: '400px' }}></div>;
+  return (
+    <div style={{ display: "flex" }}>
+      <div ref={boardRef} style={{ width: "400px", height: "400px" }}></div>
+      <div style={{ width: "200px", marginLeft: "20px" }}>
+        <h3>Top Moves</h3>
+        <ul>{topMoves.map((move, i) => <li key={i}>{move}</li>)}</ul>
+      </div>
+    </div>
+  );
 };
 
 export default ChessBoard;
