@@ -29,7 +29,7 @@ const useStockfishEngine = ({ onEvaluation }) => {
                 stockfish.postMessage("isready");
             }
             else if (data === "readyok") {
-                console.log("Stockfish ready for commands");
+                console.log("Stockfish ready");
             }
             else if (data.startsWith("info")) {
                 console.log("Analysis info:", data);
