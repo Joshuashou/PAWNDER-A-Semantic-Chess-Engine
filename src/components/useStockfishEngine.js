@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 const useStockfishEngine = ({ onEvaluation }) => {
     const engineRef = useRef(null);
     const onEvaluationRef = useRef(onEvaluation);
     const isReadyRef = useRef(false);
+    const [analysisLines, setAnalysisLines] = useState([]);
 
     // Keep callback updated
     useEffect(() => {
@@ -32,8 +33,12 @@ const useStockfishEngine = ({ onEvaluation }) => {
                 console.log("Stockfish ready");
             }
             else if (data.startsWith("info")) {
-                console.log("Analysis info:", data);
                 // Parse best moves here
+                const analysis_line = parseInfoLine(data);
+                console.log("Analysis line:", analysis_line);
+                if (analysis_line.depth === 15) {
+                    setAnalysisLines(prev => [...prev, analysis_line]);
+                }
             }
             else if (data.startsWith("bestmove")) {
                 console.log("Best move received:", data);
@@ -63,7 +68,59 @@ const useStockfishEngine = ({ onEvaluation }) => {
         engineRef.current.postMessage(cmd);
     }, []);
 
-    return { sendCommand };
+    return { sendCommand, analysisLines };
 };
+
+//Parsing function to analyze stockfish engine results. 
+const parseInfoLine = (line) => {
+    const tokens = line.split(" ");
+    const info = {};
+    
+    // First check for depth
+    const depthIndex = tokens.indexOf("depth");
+    if (depthIndex === -1 || Number(tokens[depthIndex + 1]) !== 15) {
+        return {};
+    }
+    
+    for (let i = 0; i < tokens.length; i++) {
+      switch (tokens[i]) {
+        case "depth":
+          info.depth = Number(tokens[++i]);
+          break;
+        case "seldepth":
+          info.seldepth = Number(tokens[++i]);
+          break;
+        case "multipv":
+          info.multipv = Number(tokens[++i]);
+          break;
+        case "score":
+          info.scoreType = tokens[++i]; // "cp" or "mate"
+          info.score = Number(tokens[++i]);
+          break;
+        case "nodes":
+          info.nodes = Number(tokens[++i]);
+          break;
+        case "nps":
+          info.nps = Number(tokens[++i]);
+          break;
+        case "hashfull":
+          info.hashfull = Number(tokens[++i]);
+          break;
+        case "time":
+          info.time = Number(tokens[++i]);
+          break;
+        case "pv":
+          // Capture the entire principal variation (all subsequent tokens)
+          info.pv = tokens.slice(i + 1);
+          i = tokens.length; // Exit loop after collecting the PV
+          break;
+        default:
+          // Skip any unhandled tokens
+          break;
+      }
+    }
+    return info;
+  };
+  
 
 export default useStockfishEngine;

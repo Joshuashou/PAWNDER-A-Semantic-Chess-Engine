@@ -20,7 +20,7 @@ const ChessBoard = () => {
     setTopMoves(parseStockfishOutput(data));
   }, []);
 
-  const { sendCommand } = useStockfishEngine({ onEvaluation: handleEvaluation });
+  const { sendCommand, analysisLines } = useStockfishEngine({ onEvaluation: handleEvaluation });
 
   const getDests = useCallback(() => {
     const dests = new Map();
@@ -95,13 +95,21 @@ const ChessBoard = () => {
 
   return (
     <div style={{ display: "flex" }}>
-      <div ref={boardRef} style={{ width: "400px", height: "400px" }}></div>
-      <div style={{ width: "200px", marginLeft: "20px" }}>
-        <h3>Top Moves</h3>
-        <ul>{topMoves.map((move, i) => <li key={i}>{move}</li>)}</ul>
-      </div>
+        <div ref={boardRef} style={{ width: "400px", height: "400px" }}></div>
+        <div style={{ width: "200px", marginLeft: "20px" }}>
+            <h3>Top Moves</h3>
+            {analysisLines.map((line, index) => (
+                <div key={index}>
+                    <div>Line {index + 1}:</div>
+                    {line.score && (
+                        <div>Score: {line.scoreType === 'cp' ? line.score / 100 : `Mate in ${line.score}`}</div>
+                    )}
+                    {line.pv && <div>Moves: {line.pv.join(' ')}</div>}
+                </div>
+            ))}
+        </div>
     </div>
-  );
+);
 };
 
 export default ChessBoard;
