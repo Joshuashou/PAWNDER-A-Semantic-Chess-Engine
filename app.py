@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import chess
 import uvicorn
-
+from engine.evaluator import gpt_analysis
 app = Flask(__name__)
 
 game_board = chess.Board()
@@ -15,14 +15,25 @@ def index():
 
 @app.route('/make_move', methods=['POST'])
 def make_move():
+    # Get the move and position from request
     move = request.json.get('move')
+    position = request.json.get('position')
     
     # Convert the move string (e.g., 'e2e4') to chess.Move object
     chess_move = chess.Move.from_uci(move)
     
+    # Set up board with current position
+    game_board.set_fen(position)
+    
     # Apply the move if it's legal
     if chess_move in game_board.legal_moves:
         game_board.push(chess_move)
+        
+        # Get current position in standard format
+        current_position = game_board.fen()
+        
+        # Pass through LLM step (placeholder for now)
+        llm_analysis = gpt_analysis(current_position)
         
         # Get valid moves for next turn
         valid_moves = {}
@@ -34,7 +45,8 @@ def make_move():
         
         return jsonify({
             'validMoves': valid_moves,
-            'fen': game_board.fen()  # Current board state in FEN notation
+            'fen': current_position,
+            'llmAnalysis': llm_analysis
         })
     else:
         return jsonify({'error': 'Invalid move'}), 400
