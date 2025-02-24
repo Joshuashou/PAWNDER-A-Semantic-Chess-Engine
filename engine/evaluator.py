@@ -1,3 +1,4 @@
+from openai import OpenAI
 def gpt_analysis(position):
     """
     Analyze chess position using OpenAI GPT API and return natural language analysis.
@@ -9,19 +10,17 @@ def gpt_analysis(position):
         str: Natural language analysis of the position
     """
     try:
-        from openai import OpenAI
+        
         
         client = OpenAI()
         
-        # Construct the prompt
+        # Default prompt for single position
         prompt = f"""
         Analyze this chess position (in FEN notation) and provide a brief natural language analysis 
         focusing on key tactical and strategic elements. Keep the analysis concise (2-3 sentences).
         
         Position: {position}
         """
-        
-        # Call GPT API
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[

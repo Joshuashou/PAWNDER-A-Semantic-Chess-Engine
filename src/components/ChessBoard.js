@@ -41,7 +41,7 @@ const ChessBoard = () => {
       if (sendCommand) {
         console.log("stockfish sending move command");
         sendCommand(`position fen ${newFen}`);
-        sendCommand("go depth 15");
+        sendCommand("Depth 15");
       }
     } catch (error) {
       console.error("Move error:", error);
