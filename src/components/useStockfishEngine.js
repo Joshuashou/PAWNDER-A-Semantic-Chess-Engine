@@ -33,19 +33,19 @@ const useStockfishEngine = ({ onEvaluation }) => {
                 console.log("Stockfish ready");
             }
             else if (data.startsWith("info")) {
-                // Parse best moves here
                 const analysis_line = parseInfoLine(data);
-                console.log("Analysis line:", analysis_line);
                 if (analysis_line.depth === 15) {
-                    setAnalysisLines(prev => [...prev, analysis_line]);
+                    setAnalysisLines(prev => {
+                        const newLines = [...prev];
+                        if (analysis_line.multipv) {
+                            newLines[analysis_line.multipv - 1] = analysis_line;
+                        }
+                        return newLines;
+                    });
                 }
             }
             else if (data.startsWith("bestmove")) {
-                console.log("Best move received:", data);
-                const move = data.split(" ")[1];
-                if (move && move !== "(none)") {
-                    onEvaluationRef.current([move]);
-                }
+                console.log("Analysis complete");
             }
         };
 

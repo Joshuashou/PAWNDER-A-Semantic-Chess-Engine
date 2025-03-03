@@ -41,7 +41,7 @@ const ChessBoard = () => {
       if (sendCommand) {
         console.log("stockfish sending move command");
         sendCommand(`position fen ${newFen}`);
-        sendCommand("Depth 15");
+        sendCommand("go depth 15");
       }
     } catch (error) {
       console.error("Move error:", error);
@@ -93,9 +93,61 @@ const ChessBoard = () => {
     return matches.slice(0, 5);
   };
 
+  const handlePawnderClick = async () => {
+    try {
+        const currentPosition = chess.current.fen();
+        const moves = chess.current.history();
+        const lastMove = moves[moves.length - 1];
+        
+        console.log("Sending to backend:", { move: lastMove, position: currentPosition });
+        
+        const response = await fetch('http://127.0.0.1:5000/pawnder_move', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Origin': 'http://localhost:3000'
+            },
+            mode: 'cors',
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                move: lastMove,
+                position: currentPosition
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Received from backend:", data);
+        
+    } catch (error) {
+        console.error("Error sending position to backend:", error);
+    }
+  };
+
   return (
     <div style={{ display: "flex" }}>
-        <div ref={boardRef} style={{ width: "400px", height: "400px" }}></div>
+        <div>
+            <div ref={boardRef} style={{ width: "400px", height: "400px" }}></div>
+            <button 
+                onClick={handlePawnderClick}
+                style={{
+                    marginTop: "10px",
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    backgroundColor: "#4CAF50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer"
+                }}
+            >
+                Pawnder Why!
+            </button>
+        </div>
         <div style={{ width: "200px", marginLeft: "20px" }}>
             <h3>Top Moves</h3>
             {analysisLines.map((line, index) => (

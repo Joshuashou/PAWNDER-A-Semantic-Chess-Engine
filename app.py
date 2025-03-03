@@ -2,8 +2,16 @@ from flask import Flask, render_template, jsonify, request
 import chess
 import uvicorn
 from engine.evaluator import gpt_analysis
+from flask_cors import CORS
+import logging
+
 app = Flask(__name__)
 
+# Simple CORS configuration
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
+logging.basicConfig(level=logging.INFO)
+logging.info("Starting server")
 game_board = chess.Board()
 
 @app.route('/')
@@ -13,43 +21,29 @@ def index():
     game_board = chess.Board()
     return render_template('index.html')
 
-@app.route('/make_move', methods=['POST'])
-def make_move():
-    # Get the move and position from request
-    move = request.json.get('move')
-    position = request.json.get('position')
-    
-    # Convert the move string (e.g., 'e2e4') to chess.Move object
-    chess_move = chess.Move.from_uci(move)
-    
-    # Set up board with current position
-    game_board.set_fen(position)
-    
-    # Apply the move if it's legal
-    if chess_move in game_board.legal_moves:
-        game_board.push(chess_move)
-        
-        # Get current position in standard format
-        current_position = game_board.fen()
-        
-        # Pass through LLM step (placeholder for now)
-        llm_analysis = gpt_analysis(current_position)
-        
-        # Get valid moves for next turn
-        valid_moves = {}
-        for move in game_board.legal_moves:
-            from_square = chess.square_name(move.from_square)
-            if from_square not in valid_moves:
-                valid_moves[from_square] = []
-            valid_moves[from_square].append(chess.square_name(move.to_square))
-        
-        return jsonify({
-            'validMoves': valid_moves,
-            'fen': current_position,
-            'llmAnalysis': llm_analysis
-        })
-    else:
-        return jsonify({'error': 'Invalid move'}), 400
+@app.route('/pawnder_move', methods=['POST', 'OPTIONS'])
+def pawnder_move():
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'OK'}), 200
+
+    logging.info("Received pawnder_move request")
+    try:
+        data = request.get_json()
+        move = data.get('move')
+        position = data.get('position')
+
+        print("Last move: ", move)
+        print("Current position: ", position)
+
+
+        semantic_engine_response = gpt_analysis(position)
+        logging.info("Semantic engine response: %s", semantic_engine_response)
+
+
+
+        return jsonify({'analysis': semantic_engine_response, 'status': 'OK'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
