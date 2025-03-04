@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import chess
 import uvicorn
-from engine.evaluator import gpt_analysis
+from engine.evaluator import gpt_analysis, semantic_tree_search
 from flask_cors import CORS
 import logging
 
@@ -35,8 +35,10 @@ def pawnder_move():
         print("Last move: ", move)
         print("Current position: ", position)
 
+        tree_search_string = semantic_tree_search(position, move)
 
-        semantic_engine_response = gpt_analysis(position)
+        print("Tree search string %s", tree_search_string )
+        semantic_engine_response = gpt_analysis(position, tree_search_string)
         logging.info("Semantic engine response: %s", semantic_engine_response)
 
 
@@ -46,4 +48,5 @@ def pawnder_move():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
+    #Run server locally with 
     app.run(debug=True, port=5000)
