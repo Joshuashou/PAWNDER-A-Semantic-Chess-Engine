@@ -13,6 +13,7 @@ const ChessBoard = () => {
   const [topMoves, setTopMoves] = useState([]);
   const [fen, setFen] = useState(chess.current.fen());
   const turn = chess.current.turn() === 'w' ? 'white' : 'black';
+  const [analysis, setAnalysis] = useState("");
   console.log("Hi")
 
   const handleEvaluation = useCallback((data) => {
@@ -99,7 +100,13 @@ const ChessBoard = () => {
         const moves = chess.current.history();
         const lastMove = moves[moves.length - 1];
         
-        console.log("Sending to backend:", { move: lastMove, position: currentPosition });
+        // Create a temporary chess instance to get the previous position
+        const tempChess = new Chess();
+        // Replay all moves except the last one
+        for (let i = 0; i < moves.length - 1; i++) {
+            tempChess.move(moves[i]);
+        }
+        const previousPosition = tempChess.fen();
         
         const response = await fetch('http://127.0.0.1:5000/pawnder_move', {
             method: 'POST',
@@ -112,7 +119,8 @@ const ChessBoard = () => {
             credentials: 'same-origin',
             body: JSON.stringify({
                 move: lastMove,
-                position: currentPosition
+                position: currentPosition,
+                previous_position: previousPosition
             })
         });
 
@@ -121,10 +129,12 @@ const ChessBoard = () => {
         }
 
         const data = await response.json();
+        setAnalysis(data.analysis); // Store the analysis in state
         console.log("Received from backend:", data);
         
     } catch (error) {
         console.error("Error sending position to backend:", error);
+        setAnalysis("Error getting analysis");
     }
   };
 
@@ -147,6 +157,20 @@ const ChessBoard = () => {
             >
                 Pawnder Why!
             </button>
+            <div
+                style={{
+                    marginTop: "10px",
+                    padding: "15px",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                    backgroundColor: "#f9f9f9",
+                    minHeight: "100px",
+                    maxWidth: "400px",
+                    whiteSpace: "pre-wrap"
+                }}
+            >
+                {analysis || "Click 'Pawnder Why!' to get move analysis"}
+            </div>
         </div>
         <div style={{ width: "200px", marginLeft: "20px" }}>
             <h3>Top Moves</h3>

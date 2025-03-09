@@ -1,14 +1,13 @@
 from stockfish import Stockfish
 import chess
 import os
-
+print(os.getcwd())
 
 class Engine():
 
     def __init__(self):
-        self.stockfish = Stockfish(path="/usr/local/bin/stockfish", depth=15 , parameters={"Threads": 2, "Minimum Thinking Time": 5})
-        #stockfish = Stockfish(path="/Users/zhelyabuzhsky/Work/stockfish/stockfish-9-64", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-
+        STOCKFISH_PATH = "/opt/homebrew/Cellar/stockfish/17/bin/stockfish"
+        self.stockfish = Stockfish(path=STOCKFISH_PATH, depth=15 , parameters={"Threads": 2, "Minimum Thinking Time": 5})
 
     def set_position_by_fen(self, fen):
         try: #Check Valid fen
@@ -20,15 +19,18 @@ class Engine():
 
         self.stockfish.set_fen_position(fen)
 
+
     def get_top_moves(self, n):
         return self.stockfish.get_top_moves(n)
     
     def get_evaluation(self):
         return self.stockfish.get_evaluation()
+    
+    def get_current_position(self):
+        return self.stockfish.get_fen_position()
 
     def make_move(self, move): #Move is string like "e2e4"
-        return self.stock.fish.make_moves_from_current_position([move])
-
+        return self.stockfish.make_moves_from_current_position([move])
 
 
 

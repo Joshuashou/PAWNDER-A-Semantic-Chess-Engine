@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import chess
 import uvicorn
-from engine.evaluator import gpt_analysis, semantic_tree_search
+from engine.evaluator import semantic_tree_search, gpt_analysis_final
 from flask_cors import CORS
 import logging
 
@@ -31,22 +31,26 @@ def pawnder_move():
         data = request.get_json()
         move = data.get('move')
         position = data.get('position')
+        previous_position = data.get('previous_position')
 
         print("Last move: ", move)
         print("Current position: ", position)
+        print("Previous position: ", previous_position)
 
-        tree_search_string = semantic_tree_search(position, move)
+        alternative_summarizer, last_move_summarizer, previous_evaluation, current_evaluation = semantic_tree_search(position,previous_position,move)
 
-        print("Tree search string %s", tree_search_string )
-        semantic_engine_response = gpt_analysis(position, tree_search_string)
+        semantic_engine_response = gpt_analysis_final(position, move, previous_evaluation, current_evaluation, alternative_summarizer, last_move_summarizer)
         logging.info("Semantic engine response: %s", semantic_engine_response)
 
-
-
+        # The response is already being returned correctly as part of the JSON response
+        # The frontend can access it from response.data.analysis
         return jsonify({'analysis': semantic_engine_response, 'status': 'OK'}), 200
     except Exception as e:
+        print("Ran into error")
+        print(e)
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     #Run server locally with 
-    app.run(debug=True, port=5000)
+    #Use 
+    app.run(debug=True, port=5000)          
