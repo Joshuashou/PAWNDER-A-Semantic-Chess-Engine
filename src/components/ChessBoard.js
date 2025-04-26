@@ -14,6 +14,7 @@ const ChessBoard = () => {
   const [fen, setFen] = useState(chess.current.fen());
   const turn = chess.current.turn() === 'w' ? 'white' : 'black';
   const [analysis, setAnalysis] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   console.log("Hi")
 
   const handleEvaluation = useCallback((data) => {
@@ -96,6 +97,9 @@ const ChessBoard = () => {
 
   const handlePawnderClick = async () => {
     try {
+        setIsLoading(true);
+        setAnalysis("Pawndering the reasoning behind the previous move...");
+
         const currentPosition = chess.current.fen();
         const moves = chess.current.history();
         const lastMove = moves[moves.length - 1];
@@ -135,6 +139,8 @@ const ChessBoard = () => {
     } catch (error) {
         console.error("Error sending position to backend:", error);
         setAnalysis("Error getting analysis");
+    } finally {
+        setIsLoading(false);
     }
   };
 

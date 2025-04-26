@@ -51,6 +51,6 @@ def pawnder_move():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    #Run server locally with 
-    #Use 
+    # Run server locally with: python3 app.py
+    # Server will start on http://localhost:5000 with debug mode enabled
     app.run(debug=True, port=5000)          
