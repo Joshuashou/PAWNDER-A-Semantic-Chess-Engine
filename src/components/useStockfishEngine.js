@@ -19,7 +19,9 @@ const useStockfishEngine = ({ onEvaluation }) => {
         // Use worker.onmessage to handle Stockfish responses
         stockfish.onmessage = (event) => {
             const data = event.data;
-            console.log("[Stockfish] Received:", data);
+            if (data.startsWith("info") && data.depth == 15) {
+                console.log("[Stockfish] Line Depth 15 Received:", data);
+            }
 
             if (data === "uciok") {
                 console.log("Stockfish UCI ready");

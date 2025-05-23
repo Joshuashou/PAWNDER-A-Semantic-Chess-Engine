@@ -22,19 +22,18 @@ def semantic_tree_search(current_position, previous_position, last_move, thresho
     engine.set_position_by_fen(current_position)
     current_evaluation = engine.get_evaluation()
 
-    
-
-    # alternative_continuation_analysis = alternative_continuation_summarizer(previous_position, last_move)
-
+    #Analyze alternatives to current move
     alternative_moves_tree_search_strings = find_continuation_string_from_position(engine, previous_position, threshold, top_k)
+
+    #Analyze how opponent can respond to current move
     last_move_tree_search_string = find_continuation_string_from_position(engine, current_position, threshold, top_k)
 
     print(f"Alternative moves tree search strings: {alternative_moves_tree_search_strings}")
     print(f"Last move tree search string: {last_move_tree_search_string}")
    
     # Create tasks for each continuation string
-    alternative_moves_summarizer = continuation_summarizer(previous_position, last_move, previous_evaluation, alternative_moves_tree_search_strings, alternative=True)
-    last_move_summarizer = continuation_summarizer(current_position, last_move, current_evaluation, last_move_tree_search_string, alternative=False)
+    alternative_moves_summarizer = continuation_summarizer(previous_position, last_move, previous_evaluation, current_evaluation, alternative_moves_tree_search_strings, alternative=True)
+    last_move_summarizer = continuation_summarizer(current_position, last_move, previous_evaluation, current_evaluation, last_move_tree_search_string, alternative=False)
     
 
     print(f"Alternative moves summarizer: {alternative_moves_summarizer}")
@@ -76,7 +75,7 @@ def find_continuation_string_from_position(engine, position, last_move,threshold
     return tree_search_strings
 
 
-def continuation_summarizer(position, last_move, evaluation, tree_search_string, alternative=False):
+def continuation_summarizer(position, last_move, previous_evaluation, current_evaluation, tree_search_string, alternative=False):
     #Async Function to take in continuations from multiple lines and summarize them into main points and extract 
     #Relevant information that helps the analysis of the initial move. 
     #Since doing different continuations, we can ASYNC generate as they are independent
@@ -86,7 +85,7 @@ def continuation_summarizer(position, last_move, evaluation, tree_search_string,
 
     if alternative: #Looking at alternative to last move. 
         print(f"ALT LAST MOVE {last_move}")
-        context_string = f"We are currently at position {position} and the player made the following move: {last_move}. The engine evaluation before this move was {evaluation}. Here are the alternatives to this move and the respective continuations: "
+        context_string = f"We are currently at position {position} and the player made the following move: {last_move}. The engine evaluation before this move was {previous_evaluation}, and it has now changed to {current_evaluation} Here are the alternatives to this move and the respective continuations: "
 
     else: #Looking at continuations
         context_string = f"We are currently at position {position} and the last move was {last_move} As a result the engine evaluation is {evaluation}. Here are the continuations from this move: "

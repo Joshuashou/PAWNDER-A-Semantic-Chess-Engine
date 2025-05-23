@@ -12,7 +12,7 @@ import "../node_modules/chessground/assets/chessground.cburnett.css";
 const App = () => {
     return (
       <div>
-        <h1>Semantic Chess Engine</h1>
+        <h1>Semantic Chess Engine: Pawnder Why</h1>
         <ChessBoard />
       </div>
     );
